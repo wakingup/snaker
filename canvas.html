@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        #mycanvas{
+            background: #000000;
+        }
+        #control{
+            margin-left: 200px;
+            width: 600px;
+            height: 600px;
+            position: relative;
+        }
+        .g {
+            background-color: black;
+            width: 200px;
+            height: 200px;
+            position: absolute;
+        }
+        .left{
+            left: 0px;
+            top: 200px;
+        }
+        .bottom{
+            top: 400px;
+            left: 200px;
+        }
+        .right{
+            right: 0px;
+            top: 200px;
+        }
+        .top{
+            top: 0xp;
+            left: 200px;
+        }
+    </style>
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script>
+        $(window).ready(function(){
+            var canvas =$("#mycanvas");
+            var context =canvas.get(0).getContext("2d");
+            context.fillStyle ="rgb(255,255,255)";
+            var flag =false; //表示食物存在
+            var rectFood;  //食物的位置
+            var left = 0,top =0;
+            var lastX=0,lastY=0,lastvX=0,lastvY=0;
+            var gameover =false;
+            var speed =100;
+
+            //贪吃蛇的身体
+            var rect =function(x,y){
+                this.y =y;
+                this.x =x;
+                this.w =this.h =20;
+                this.vx =this.vy =20;
+            }
+            var rects =new Array();
+            var x =0;
+            var y =0;
+            rects.push(new rect(x,y));
+            animate();
+            function animate(){
+                context.clearRect(0,0,canvas.width(),canvas.height());
+                lastX =rects[rects.length-1].x;
+                lastY =rects[rects.length-1].y;
+                lastvX =rects[rects.length-1].vx;
+                lastvY =rects[rects.length-1].vy;
+                if(!flag) {
+                    rectFood =food();
+                    flag =true;
+                }
+                context.fillRect(rectFood.x,rectFood.y,rectFood.w,rectFood.h);
+
+
+                //给物体附上速度
+                for(var i=rects.length-1;i>0;i--){
+                    rects[i].vx =rects[i-1].vx;
+                    rects[i].vy =rects[i-1].vy;
+                }
+                
+                //给物体附上方向,并将其画上
+                for(var i=0;i<rects.length;i++) {
+                    var tmpRect =rects[i];
+                    if(i ==0) {
+                        tmpRect.vx = left;
+                        tmpRect.vy = top;
+                    }
+                    tmpRect.x +=tmpRect.vx;
+                    tmpRect.y +=tmpRect.vy;
+                    context.fillRect(tmpRect.x,tmpRect.y,tmpRect.w,tmpRect.h);
+                }
+                console.log(rects.length-1);
+
+                //判断贪吃蛇有没有碰撞到边界
+                if(rects[0].x<0
+                        ||rects[0].x>canvas.width()-rects[0].w
+                        ||rects[0].y<0
+                        ||rects[0].y>canvas.height()-rects[0].h){
+                    gameover =true;
+                }
+                //判断贪吃蛇有没有撞到自己的身体
+                for(var i=1;i<rects.length;i++){
+                    if(rects[0].x ==rects[i].x &&rects[0].y ==rects[i].y){
+                        gameover =true;
+                    }
+                }
+                //判断有没有跟食物碰撞，然后将其重新附上值
+                if(rects[0].x ==rectFood.x&&rects[0].y ==rectFood.y){
+                    speed -=5;
+                    rects.push(new rect(lastX,lastY));
+                    rects[rects.length-1].vx =lastvX;
+                    rects[rects.length-1].vy =lastvY;
+                    rectFood.x =rectFood.y =10000;
+                    flag =false;
+                }
+                if(!gameover) {
+                    setTimeout(animate, speed );
+                }else{
+                    context.clearRect(0,0,canvas.width(),canvas.height());
+                    context.font ="50px serif";
+                    context.fillText("得分："+(rects.length-1)*1000,canvas.width()/2-150,canvas.height()/2);
+                }
+            }
+
+            //用上下左右箭头控制方向
+            // $(window).keydown(function(ev){
+            //     var ev =ev||event;
+            //     switch(ev.keyCode){
+            //         case 37: //左
+            //             left =-20;
+            //             top =0;
+            //             break;
+            //         case 39: //右
+            //             left =20;
+            //             top =0;
+            //             break;
+            //         case 38: //上
+            //             left =0;
+            //             top =-20;
+            //             break;
+            //         case 40: //下
+            //             left =0;
+            //             top =20;
+            //             break;
+            //     }
+            // })
+
+            var control =$("#control .g")
+            control.click(function(){
+                switch($(this).index()){
+                    case 0: //左
+                        left =-20;
+                        top =0;
+                        break;
+                    case 2: //右
+                        left =20;
+                        top =0;
+                        break;
+                    case 1: //上
+                        left =0;
+                        top =-20;
+                        break;
+                    case 3: //下
+                        left =0;
+                        top =20;
+                        break;
+                }
+            })
+
+
+            function food(){
+                var foodFlag =true;
+                var x =parseInt(Math.random()*50)*20;
+                var y =parseInt(Math.random()*25)*20;
+                for(var i=0;i<rects.length;i++){
+                    if(rects[i].x ==x&&rects[i].y ==y){
+                        food();
+                        foodFlag =true;
+                        break;
+                    }
+                }
+                if(foodFlag) {
+                    return (new rect(x, y));
+                }
+            }
+        })
+    </script>
+</head>
+<body>
+<canvas width="1000" height="750" id="mycanvas"></canvas>
+<div id="control">
+    <div class="g left" id="left"></div>
+    <div class="g top" id="top"></div>
+    <div class="g right" id="right"></div>
+    <div class="g bottom" id="bottom"></div>
+</div>
+</body>
+</html>
